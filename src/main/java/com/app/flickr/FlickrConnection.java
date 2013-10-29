@@ -29,6 +29,10 @@ public class FlickrConnection {
 	private String keyAPI;
 	private String secretAPI;
 	
+	/** Method create Flickr class instance.
+	@param key Account's flickr key.
+	@param secret Account's flickr shared secret.
+	*/
 	FlickrConnection(String key, String secret) throws ParserConfigurationException{
 		keyAPI = key;
 		secretAPI = secret;
@@ -41,10 +45,15 @@ public class FlickrConnection {
 	    Flickr.debugStream = false;
 	}
 	
-	public String[] getTagedPhotos(int amountOfPhotos, String[] tags) throws IOException, SAXException, FlickrException{
+	/** Method returns String massive of photos URLs with specified tags.
+	@param listSize Number of tagged photos you want to get from flickr.com.
+	@param tags Photos with that tags you'll get.
+	*/
+	public String[] getTagedPhotos(int listSize, String[] tags) throws IOException, SAXException, FlickrException{
 		//initialize SearchParameter object, this object stores the search keyword
 	    SearchParameters searchParams = new SearchParameters();
 	    searchParams.setSort(SearchParameters.INTERESTINGNESS_DESC);
+	    //make investigation
 	   
 	    //Setting tag keyword array
 	    searchParams.setTags(tags);
@@ -52,17 +61,17 @@ public class FlickrConnection {
 	    //Initialize PhotosInterface object
 	    PhotosInterface photosInterface = flickr.getPhotosInterface();
 	    
-	    //Execute search with entered tags
 	    /*
+	     * Execute search with entered tags
 	     * SearchParameters: 
 	     * params - The search parameters
 	     * perPage - The number of photos to show per page
 	     * page - The page offset or results from page #
 	     */
-	    PhotoList<Photo> photoList = photosInterface.search(searchParams, amountOfPhotos, 1);
+	    PhotoList<Photo> photoList = photosInterface.search(searchParams, listSize, 1);
 	    
 	    //get search result and fetch the photo object and get imag's url
-	    String[] urls = new String[amountOfPhotos];
+	    String[] urls = new String[listSize];
 	    if(photoList!= null){
 	       //Get search result and check the size of photo result
 	       for(int i = 0; i < photoList.size(); i++){
@@ -76,36 +85,29 @@ public class FlickrConnection {
 	    return urls;
 	}
 	
-	public String[] getPopularPhotos(int amountOfPhotos, int year, int month, int day, Set<String> extras) throws FlickrException, HttpException, IOException{
-	    //Date
-		/*
-		 * 	year - the value used to set the YEAR calendar field.
-			month - the value used to set the MONTH calendar field. Month value is 0-based. e.g., 0 for January.
-			date - the value used to set the DAY_OF_MONTH calendar field.
-		 */
-		Calendar c = new GregorianCalendar();
-		c.set(year, month, day);
-		//c.add(Calendar.DAY_OF_YEAR, -1);
-		Date date = new Date(c.getTimeInMillis());
-		
-	    /*
-	     *  extras (Optional)
-           A comma-delimited list of extra information to fetch for each returned record. 
+	/** Method returns String massive of popular photos URLs related with specified date.
+	@param listSize Number of tagged photos you want to get from flickr.com.
+	@param year The YEAR calendar field.
+	@param month The MONTH calendar field. Month value is 0-based. e.g., 0 for January.
+	@param date The DAY_OF_MONTH calendar field.
+	@param extras A comma-delimited list of extra information to fetch for each returned record. 
            Currently supported fields are: description, license, date_upload, date_taken, 
            owner_name, icon_server, original_format, last_update, geo, tags, machine_tags, 
            o_dims, views, media, path_alias, url_sq, url_t, url_s, url_q, url_m, url_n, url_z, 
            url_c, url_l, url_o
-	     */
-	    
-	    //500 photos method
-	    //PhotoList<Photo> photoList = flickr.getInterestingnessInterface().getList();
-	    
-	    //random method
-	    PhotoList<Photo> photoList = flickr.getInterestingnessInterface().getList(date, extras, amountOfPhotos, 1);
-	    
-	    //get search result and fetch the photo object and get imag's url
+	*/
+	public String[] getPopularPhotos(int listSize, int year, int month, int day, Set<String> extras) throws FlickrException, HttpException, IOException{
+	    //Date
+		Calendar c = new GregorianCalendar();
+		c.set(year, month, day);
+		//c.add(Calendar.DAY_OF_YEAR, -1);
+		Date date = new Date(c.getTimeInMillis());
+
+	    PhotoList<Photo> photoList = flickr.getInterestingnessInterface().getList(date, extras, listSize, 1);
+
+	    //get search result and fetch the photo object and get imag's URL
 	    String[] urls = new String[photoList.size()];
-	    String[] names = new String[photoList.size()];
+	    
 	    if(photoList!= null){
 	       //Get search result and check the size of photo result
 	       for(int i = 0; i < photoList.size(); i++){
@@ -114,10 +116,6 @@ public class FlickrConnection {
 	          
 	          //Get url photo 
 	          urls[i] = photo.getLargeUrl();
-	          
-	          //Get photo name
-	          names[i] = photo.getTitle();
-	          System.out.println(photo.getTitle());	  
 	       }
 	    }
 	    return urls;
@@ -145,12 +143,12 @@ public class FlickrConnection {
 			FlickrConnection fc = new FlickrConnection(key, secret);
 			
 			String[] tags = new String[]{"plane"};
-			fc.getTagedPhotos(2, tags);
+			fc.getTagedPhotos(2, tags);			
 			
 			HashSet<String> extras = new HashSet<String>();
 		    extras.add("license");
 		    extras.add("original_format");
-			String[] urls = fc.getPopularPhotos(2, 2013, 9, 26, extras);
+			String[] urls = fc.getPopularPhotos(4, 2013, 9, 27, extras);
 			
 			int i = 0;
 			for(String e : urls){
@@ -160,18 +158,77 @@ public class FlickrConnection {
 			
 			
 		} catch (ParserConfigurationException e) {
-			// TODO Auto-generated catch block
+			//Indicates a serious configuration error.
 			e.printStackTrace();
-		} 
-		catch (IOException e) {
-			// TODO Auto-generated catch block
+			
+			System.out.println(e.getMessage());
+			
+		} catch (IOException e) {
+			/*
+			 * Signals that an I/O exception of some sort has occurred. 
+			 * This class is the general class of exceptions produced by 
+			 * failed or interrupted I/O operations.
+			 */
 			e.printStackTrace();
+			
+			System.out.println(e.getMessage());
+			
 		} catch (FlickrException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			e.getErrorCode();
+			e.getErrorMessage();
+			/*
+			 *  1: Too many tags in ALL query 
+					When performing an 'all tags' search, you may not specify more than 20 tags to join together.
+				2: Unknown user
+					A user_id was passed which did not match a valid flickr user.
+				3: Parameterless searches have been disabled
+					To perform a search with no parameters (to get the latest public photos, please use flickr.photos.getRecent instead).
+				4: You don't have permission to view this pool
+					The logged in user (if any) does not have permission to view the pool for this group.
+				10: Sorry, the Flickr search API is not currently available.
+					The Flickr API search databases are temporarily unavailable.
+				11: No valid machine tags
+					The query styntax for the machine_tags argument did not validate.
+				12: Exceeded maximum allowable machine tags
+					The maximum number of machine tags in a single query was exceeded.
+				17: You can only search within your own contacts
+					The call tried to use the contacts parameter with no user ID or a user ID other than that of the authenticated user.
+				18: Illogical arguments
+					The request contained contradictory arguments.
+				100: Invalid API Key
+					The API key passed was not valid or has expired.
+				105: Service currently unavailable
+					The requested service is temporarily unavailable.
+				106: Write operation failed
+					The requested operation failed due to a temporary issue.
+				111: Format "xxx" not found
+					The requested response format was not found.
+				112: Method "xxx" not found
+					The requested method was not found.
+				114: Invalid SOAP envelope
+					The SOAP envelope send in the request could not be parsed.
+				115: Invalid XML-RPC Method Call
+					The XML-RPC request document could not be parsed.
+				116: Bad URL found
+					One or more arguments contained a URL that has been used for abuse on Flickr.
+			 */
+			System.out.println(e.getMessage());
+			
 		} catch (SAXException e) {
-			// TODO Auto-generated catch block
+			/*
+			 * This class can contain basic error or warning information from either the 
+			 * XML parser or the application: a parser writer or application writer can 
+			 * subclass it to provide additional functionality. SAX handlers may throw 
+			 * this exception or any exception subclassed from it.
+			 * If the application needs to pass through other types of exceptions, 
+			 * it must wrap those exceptions in a SAXException or an exception derived from a SAXException.
+			 * If the parser or application needs to include information about a specific 
+			 * location in an XML document, it should use the SAXParseException subclass.
+			 */
 			e.printStackTrace();
+			
+			System.out.println(e.getMessage());
+			
 		}
 	}
 
